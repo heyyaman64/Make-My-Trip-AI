@@ -49,7 +49,7 @@ app = FastAPI(
 
 app.mount(
     "/static",
-    StaticFiles(directory=str(FRONTEND_DIR)),
+    StaticFiles(directory=str(FRONTEND_DIR), check_dir=True),
     name="frontend",
 )
 
