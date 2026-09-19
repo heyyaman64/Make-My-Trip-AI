@@ -2,9 +2,8 @@ from pathlib import Path
 import traceback
 
 import uvicorn
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from backend import run_travel_agent, resume_travel_agent
@@ -44,17 +43,6 @@ app = FastAPI(
 
 
 # ============================================================
-# SERVE FRONTEND STATIC FILES
-# ============================================================
-
-app.mount(
-    "/static",
-    StaticFiles(directory=str(FRONTEND_DIR), check_dir=True),
-    name="frontend",
-)
-
-
-# ============================================================
 # REQUEST MODELS
 # ============================================================
 
@@ -75,6 +63,7 @@ class ApprovalRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def home():
+
     index_file = FRONTEND_DIR / "index.html"
 
     if not index_file.exists():
@@ -89,6 +78,50 @@ async def home():
 
 
 # ============================================================
+# FRONTEND STATIC FILES
+# ============================================================
+
+@app.get("/static/style.css")
+async def serve_css():
+
+    css_file = FRONTEND_DIR / "style.css"
+
+    if not css_file.exists():
+        return JSONResponse(
+            status_code=404,
+            content={
+                "success": False,
+                "error": "style.css not found.",
+            },
+        )
+
+    return FileResponse(
+        path=str(css_file),
+        media_type="text/css",
+    )
+
+
+@app.get("/static/script.js")
+async def serve_javascript():
+
+    js_file = FRONTEND_DIR / "script.js"
+
+    if not js_file.exists():
+        return JSONResponse(
+            status_code=404,
+            content={
+                "success": False,
+                "error": "script.js not found.",
+            },
+        )
+
+    return FileResponse(
+        path=str(js_file),
+        media_type="application/javascript",
+    )
+
+
+# ============================================================
 # TRAVEL PLANNER
 # ============================================================
 
@@ -96,6 +129,7 @@ async def home():
 async def travel_planner(request_data: TravelRequest):
 
     try:
+
         user_message = request_data.message.strip()
 
         if not user_message:
@@ -210,6 +244,7 @@ async def health_check():
 
 @app.get("/favicon.ico")
 async def favicon():
+
     return JSONResponse(content={})
 
 
